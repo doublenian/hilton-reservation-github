@@ -1,0 +1,16 @@
+# 自动安装peer dependencies
+auto-install-peers=true
+
+# 严格的peer dependencies检查
+strict-peer-dependencies=false
+
+# 使用硬链接节省磁盘空间
+prefer-workspace-packages=true
+
+# 安装时显示详细信息
+loglevel=info
+
+# hoisting配置
+hoist-pattern[]=*eslint*
+hoist-pattern[]=*prettier*
+hoist-pattern[]=*typescript* 

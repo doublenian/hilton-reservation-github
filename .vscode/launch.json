@@ -1,0 +1,21 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug API Server",
+      "cwd": "${workspaceFolder}/apps/api-server",
+      "program": "${workspaceFolder}/apps/api-server/src/app.ts",
+      "outFiles": ["${workspaceFolder}/apps/api-server/dist/**/*.js"],
+      "runtimeArgs": ["-r", "ts-node/register"],
+      "env": {
+        "NODE_ENV": "development",
+        "PORT": "4000",
+        "LOG_LEVEL": "debug"
+      },
+      "console": "integratedTerminal",
+      "sourceMaps": true
+    }
+  ]
+}

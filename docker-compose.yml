@@ -1,0 +1,137 @@
+services:
+  # Couchbase数据库
+  couchbase:
+    image: couchbase:community-7.1.1
+    container_name: hilton-couchbase
+    ports:
+      - "8091:8091"
+      - "8092:8092"
+      - "8093:8093"
+      - "8094:8094"
+      - "11210:11210"
+    environment:
+      - COUCHBASE_ADMINISTRATOR_USERNAME=Administrator
+      - COUCHBASE_ADMINISTRATOR_PASSWORD=password
+    volumes:
+      - couchbase_data:/opt/couchbase/var
+      - ./infrastructure/database/init-couchbase.sh:/opt/couchbase/init-couchbase.sh
+      - ./infrastructure/database/init-couchbase-improved.sh:/opt/couchbase/init-couchbase-improved.sh
+    healthcheck:
+      test: ["CMD", "sh", "-c", "curl -s http://localhost:8091/pools && exit 0 || [ $? -eq 22 ] && exit 0 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - hilton-network
+
+  # Couchbase 自动初始化服务
+  couchbase-init:
+    image: couchbase:community-7.1.1
+    container_name: hilton-couchbase-init
+    depends_on:
+      couchbase:
+        condition: service_healthy
+    volumes:
+      - ./infrastructure/database/init-couchbase-improved.sh:/opt/couchbase/init-couchbase-improved.sh
+    environment:
+      - COUCHBASE_HOST=couchbase:8091
+      - COUCHBASE_USERNAME=Administrator
+      - COUCHBASE_PASSWORD=password
+      - BUCKET_NAME=hilton_reservations
+    command: >
+      sh -c "
+        echo '🔧 准备执行 Couchbase 初始化...' &&
+        chmod +x /opt/couchbase/init-couchbase-improved.sh &&
+        /opt/couchbase/init-couchbase-improved.sh
+      "
+    networks:
+      - hilton-network
+    restart: "no"
+
+  # API服务器
+  api-server:
+    build:
+      context: .
+      dockerfile: apps/api-server/Dockerfile
+    container_name: hilton-api-server
+    ports:
+      - "4000:4000"
+    environment:
+      - NODE_ENV=production
+      - PORT=4000
+      - COUCHBASE_CONNECTION_STRING=couchbase://couchbase
+      - COUCHBASE_USERNAME=Administrator
+      - COUCHBASE_PASSWORD=password
+      - COUCHBASE_BUCKET_NAME=hilton_reservations
+      - JWT_SECRET=my-hilton-jwt-secret-demo
+      - JWT_ACCESS_EXPIRES_IN=15m
+      - JWT_REFRESH_EXPIRES_IN=7d
+      - CORS_ORIGIN=http://localhost:3000,http://localhost:3001
+      - LOG_LEVEL=info
+    depends_on:
+      - couchbase-init
+    volumes:
+      - api_logs:/app/logs
+    networks:
+      - hilton-network
+
+  # 客人端Web应用 (Vite React SPA)
+  guest-web:
+    build:
+      context: .
+      dockerfile: apps/guest-web/Dockerfile
+    container_name: hilton-guest-web
+    ports:
+      - "3000:80"  # 容器内使用nginx提供静态文件
+    environment:
+      - NODE_ENV=production
+      - VITE_APP_NAME=Hilton Guest Portal
+    depends_on:
+      - api-server
+    networks:
+      - hilton-network
+
+  # 员工端Web应用 (Vite React SPA)
+  employee-web:
+    build:
+      context: .
+      dockerfile: apps/employee-web/Dockerfile
+    container_name: hilton-employee-web
+    ports:
+      - "3001:80"  # 容器内使用nginx提供静态文件
+    environment:
+      - NODE_ENV=production
+      - VITE_APP_NAME=Hilton Employee Portal
+    depends_on:
+      - api-server
+    networks:
+      - hilton-network
+
+  # Nginx反向代理
+  nginx:
+    build:
+      context: ./infrastructure/nginx
+      dockerfile: Dockerfile
+    container_name: hilton-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - guest-web
+      - employee-web
+      - api-server
+    volumes:
+      - ./infrastructure/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./infrastructure/nginx/ssl:/etc/nginx/ssl:ro
+    networks:
+      - hilton-network
+
+volumes:
+  couchbase_data:
+    driver: local
+  api_logs:
+    driver: local
+
+networks:
+  hilton-network:
+    driver: bridge 

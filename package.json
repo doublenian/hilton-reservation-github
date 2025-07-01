@@ -1,0 +1,46 @@
+{
+  "name": "hilton-reservation",
+  "version": "1.0.0",
+  "description": "希尔顿餐桌预定系统 - Hilton Table Reservation System",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"pnpm --filter api-server dev\" \"pnpm --filter guest-web dev\" \"pnpm --filter employee-web dev\"",
+    "build": "pnpm --recursive build",
+    "test": "pnpm --recursive test",
+    "lint": "pnpm --recursive lint",
+    "clean": "pnpm --recursive exec rm -rf node_modules && rm -rf node_modules",
+    "install:all": "pnpm install",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "workspace:list": "pnpm list --recursive",
+    "workspace:outdated": "pnpm outdated --recursive"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "concurrently": "^8.2.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "keywords": [
+    "restaurant",
+    "reservation",
+    "hilton",
+    "react",
+    "nodejs",
+    "graphql",
+    "couchbase"
+  ],
+  "author": "Hilton Development Team",
+  "license": "MIT",
+  "dependencies": {
+    "@types/react": "^19.1.6",
+    "@types/react-dom": "^19.1.5",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  }
+}

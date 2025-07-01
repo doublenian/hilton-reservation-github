@@ -1,0 +1,11 @@
+packages:
+  - apps/*
+  - packages/*
+ignoredBuiltDependencies:
+  - '@apollo/protobufjs'
+  - '@tailwindcss/oxide'
+  - bcrypt
+  - core-js-pure
+  - couchbase
+  - es5-ext
+  - esbuild
